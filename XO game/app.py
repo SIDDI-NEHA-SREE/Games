@@ -15,7 +15,7 @@ st.markdown("""
     .win-text { font-size: 30px; font-weight: bold; color: #2ecc71; text-align: center; }
     .turn-text { font-size: 20px; font-weight: bold; text-align: center; }
     </style>
-""", unsafe_allowed_html=True)
+""", unsafe_allow_html=True)
 
 # --- GLOBAL LIVE GAME STORAGE ---
 # Streamlit clears local memory per user, so we use a global memory dictionary 
