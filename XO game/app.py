@@ -18,12 +18,13 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # --- GLOBAL LIVE GAME STORAGE ---
-# Streamlit clears local memory per user, so we use a global memory dictionary 
-# to sync player boards across different computers in real-time.
-if "global_rooms" not in st.experimental_singleton:
-    st.experimental_singleton.global_rooms = {}
+# Modern Streamlit caching decorator ensures this dictionary persists globally 
+# across all users connected to the server instance.
+@st.cache_resource
+def get_global_rooms():
+    return {}
 
-rooms = st.experimental_singleton.global_rooms
+rooms = get_global_rooms()
 
 # --- ROOM MANAGEMENT & URL ROUTING ---
 query_params = st.query_params
@@ -102,23 +103,24 @@ def reset_game():
 st.title("❌ Multi-Player XO ⭕")
 st.caption(f"Lobby Code: **{room_id}** | Your Role: **Player {st.session_state.my_role}**")
 
-# Share Link UI
-share_url = f"https://share.streamlit.io/your-username/your-repo/main/app.py?room={room_id}" 
-# Note: Streamlit will automatically map domain names on local/cloud deployment.
-st.text_input("📋 Copy this link and send it to your friend:", value=st.page_link)
+# Constructing the shareable link dynamically using your specific app URL
+base_url = "https://xo-game-share.streamlit.app/"
+share_url = f"{base_url}?room={room_id}"
+
+st.text_input("📋 Copy this link and send it to your friend:", value=share_url)
 
 st.write("---")
 
 # Display Status Text
 if game["winner"]:
-    st.markdown(f'<p class="win-text">🎉 Player {game["winner"]} Wins! 🎉</p>', unsafe_allowed_html=True)
+    st.markdown(f'<p class="win-text">🎉 Player {game["winner"]} Wins! 🎉</p>', unsafe_allow_html=True)
 elif game["is_draw"]:
     st.markdown('<p class="win-text">🤝 It\'s a Tie Draw! 🤝</p>', unsafe_allowed_html=True)
 else:
     if game["turn"] == st.session_state.my_role:
-        st.markdown('<p class="turn-text" style="color:#3498db;">🟢 Your Turn!</p>', unsafe_allowed_html=True)
+        st.markdown('<p class="turn-text" style="color:#3498db;">🟢 Your Turn!</p>', unsafe_allow_html=True)
     else:
-        st.markdown(f'<p class="turn-text" style="color:#e67e22;">⏳ Waiting for Player {game["turn"]}...</p>', unsafe_allowed_html=True)
+        st.markdown(f'<p class="turn-text" style="color:#e67e22;">⏳ Waiting for Player {game["turn"]}...</p>', unsafe_allow_html=True)
 
 # Render 3x3 Grid
 board_container = st.container()
@@ -128,10 +130,8 @@ with board_container:
         for col in range(3):
             idx = row * 3 + col
             label = game["board"][idx]
-            # Use styling depending on filled state
             button_label = label if label != "" else " "
             
-            # Action button for grid cell
             cols[col].button(
                 button_label, 
                 key=f"btn_{idx}", 
@@ -145,7 +145,7 @@ st.write("---")
 col_ctrl1, col_ctrl2 = st.columns(2)
 with col_ctrl1:
     if st.button("🔄 Refresh Screen"):
-        st.rerun() # Forces streamlit to sync state updates from the global dictionary
+        st.rerun()
 with col_ctrl2:
     if st.button("🧹 Clear & Play Again"):
         reset_game()
